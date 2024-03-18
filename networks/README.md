@@ -11,6 +11,76 @@ with an auto subnet network.
 In this lab you use gcloud to create two custom VPC networks with subnets, firewall rules, and VM instances, then test 
 the networks' ability to allow traffic from the public internet.
 
+# Understanding Regions and Zones
+
+Certain Compute Engine resources live in regions or zones. A region is a specific geographical location where you can run 
+your resources. Each region has one or more zones. For example, the us-central1 region denotes a region in the Central 
+United States that has zones us-central1-a, us-central1-b, us-central1-c, and us-central1-f.
+
+Regions	Zones
+```
+Western US	us-west1-a, us-west1-b
+Central US	us-central1-a, us-central1-b, us-central1-d, us-central1-f
+Eastern US	us-east1-b, us-east1-c, us-east1-d
+Western Europe	europe-west1-b, europe-west1-c, europe-west1-d
+Eastern Asia	asia-east1-a, asia-east1-b, asia-east1-c
+```
+
+Resources that live in a zone are referred to as zonal resources. Virtual machine Instances and persistent disks live in a zone. 
+To attach a persistent disk to a virtual machine instance, both resources must be in the same zone. Similarly, if you want to 
+assign a static IP address to an instance, the instance must be in the same region as the static IP.
+
+
+# Google Cloud Network Concepts
+
+Google Cloud Platform supports Projects, Networks, and Subnetworks to provide flexible, logical isolation of unrelated resources.
+
+![arch](diagram/1.png)
+
+**Projects**\
+Projects are the outermost container and are used to group resources that share the same trust boundary. Many developers map 
+Projects to teams since each Project has its own access policy (IAM) and member list. Projects also serve as a collector of 
+billing and quota details reflecting resource consumption. Projects contain Networks which contain Subnetworks, Firewall rules, 
+and Routes (see below architecture diagrams for illustration).
+
+![arch](diagram/2.png)
+
+
+**Networks**\
+Networks directly connect your resources to each other and to the outside world. Networks, using Firewalls, also house the access 
+policies for incoming and outgoing connections. Networks can be Global (offering horizontal scalability across multiple Regions) 
+or Regional (offering low-latency within a single Region).
+
+**Subnetworks**\
+Subnetworks allow you to group related resources (Compute Engine instances) into RFC1918 private address spaces. Subnetworks can 
+only be Regional. A subnetwork can be in auto mode or custom mode.
+
+- An auto mode network has one subnet per region, each with a predetermined IP range and gateway. These subnets are created automatically 
+  when you create the auto mode network, and each subnet has the same name as the overall network.
+- A custom mode network has no subnets at creation. In order to create an instance in a custom mode network, you must first create a subnetwork 
+  in that region and specify its IP range. A custom mode network can have zero, one, or many subnets per region.
+
+**Firewalls**\
+Each network has a default firewall that blocks all inbound traffic to instances. To allow traffic to come into an instance, you must create 
+"allow" rules for the firewall. Additionally, the default firewall allows traffic from instances unless you configure it to block outbound 
+connections using an "egress" firewall configuration. Therefore, by default you can create "allow" rules for traffic you wish to pass ingress, 
+and "deny" rules for traffic you wish to restrict egress. You may also create a default-deny policy for egress and prohibit external 
+connections entirely.
+
+**Network route**
+All networks have routes created automatically to the Internet (default route) and to the IP ranges in the network. The route names are 
+automatically generated and will look different for each project.
+
+- To review default routes, click Navigation menu > VPC network > Routes > Select Network and Region to view Routes.
+
+Google Cloud Networking uses Routes to direct packets between subnetworks and to the Internet. Whenever a subnetwork is created 
+(or pre-created) in your Network, routes are automatically created in each region to allow packets to route between subnetworks. 
+These cannot be modified.
+
+Additional Routes can be created to send traffic to an instance, a VPN gateway, or default internet gateway. These Routes can be 
+modified to tailor the desired network architecture. Routes and Firewalls work together to ensure your traffic gets where it needs 
+to go.
+
 # Create a VPC Network
 
 ```
@@ -343,3 +413,51 @@ PING 35.236.245.109 (35.236.245.109) 56(84) bytes of data.
 3 packets transmitted, 0 received, 100% packet loss, time 2047ms
 ```
 
+# Internal DNS for VMs
+
+Each instance has a metadata server that also acts as a DNS resolver for that instance. DNS lookups are performed 
+for instance names. The metadata server itself stores all DNS information for the local network and queries Google's 
+public DNS servers for any addresses outside of the local network.
+
+An internal fully qualified domain name (FQDN) for an instance looks like this: `hostName.[ZONE].c.[PROJECT_ID].internal`.
+You can always connect from one instance to another using this FQDN. If you want to connect to an instance using, for example, 
+just hostName, you need information from the internal DNS resolver that is provided as part of Compute Engine.
+
+# TraceRoute
+
+Traceroute is a tool to trace the path between two hosts. A traceroute can be a helpful first step to uncovering many 
+different types of network problems. Support or network engineers often ask for a traceroute when diagnosing network 
+issues.
+
+Traceroute shows all Layer 3 (routing layer) hops between the hosts. This is achieved by sending packets to the remote destination 
+with increasing TTL (Time To Live) value (starting at 1). The TTL field is a field in the IP packet which gets decreased by one at 
+every router. Once the TTL hits zero, the packet gets discarded and a "TTL exceeded" ICMP message is returned to the sender. This 
+approach is used to avoid routing loops; packets cannot loop continuously because the TTL field will eventually decrement to 0. By 
+default the OS sets the TTL value to a high value (64, 128, 255 or similar), so this should only ever be reached in abnormal situations.
+So traceroute sends packets first with TTL value of 1, then TTL value of 2, etc., causing these packets to expire at the first/second/etc. 
+router in the path. It then takes the source IP/host of the ICMP TTL exceeded message returned to show the name/IP of the intermediate hop. 
+Once the TTL is high enough, the packet reaches the destination, and the destination responds.
+
+The type of packet sent varies by implementation. Under Linux, UDP packets are sent to a high, unused port. So the final destination responds 
+with an ICMP Port Unreachable. Windows and the mtr tool by default use ICMP echo requests (like ping), so the final destination answers with 
+an ICMP echo reply.
+
+# iPerf
+
+iPerf is a widely used network testing tool that can measure the bandwidth and the performance of network links. In Google Cloud Platform (GCP) 
+networking, iPerf can be particularly useful for several scenarios:
+
+- Performance Benchmarking: You can use iPerf to test the network performance between different regions or zones within GCP. This can help in 
+  selecting the most appropriate regions or zones for your applications based on network speed and latency.
+
+- Troubleshooting Network Issues: iPerf can help identify network bottlenecks or connectivity issues within your GCP environment. By running 
+  tests between virtual machines (VMs) in different parts of your network, you can pinpoint areas of poor performance and potential disruptions.
+
+- Bandwidth Measurement: iPerf is excellent for measuring the maximum bandwidth achievable between VM instances in GCP. This can be critical for 
+  applications that require high throughput, enabling you to verify if the network infrastructure meets the application’s bandwidth requirements.
+
+- Network Optimization: By continuously monitoring network performance using iPerf, you can make informed decisions about network configurations, 
+  such as firewall rules, routes, and VM sizes. This ensures that your network is optimized for both performance and cost.
+
+In essence, iPerf is a versatile tool in the GCP toolkit, aiding in the detailed analysis and optimization of network performance to ensure 
+applications run efficiently and reliably on Google Cloud's infrastructure.
