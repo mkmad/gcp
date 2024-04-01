@@ -168,12 +168,14 @@ export US_WEB_IP=$(gcloud compute instances describe us-web-vm --zone=us-west1 -
 export EUROPE_WEB_IP=$(gcloud compute instances describe europe-web-vm --zone=europe-west1 --format="value(networkInterfaces.networkIP)")
 ```
 
-# Create the private zone
+# Create the private zone for a domain that you own (assuming example.com is a domain that you own)
 
 Now that your client and server VMs are running, it's time to configure the DNS settings. Before creating 
 the A records for the web servers, you need to create the Cloud DNS Private Zone.
 
-For this lab, use the example.com domain name for the Cloud DNS zone.
+For this lab, use the `example.com` domain name for the Cloud DNS zone.
+
+Note: See[gcp cloud domains](https://cloud.google.com/domains/docs) for gcp cloud domains.
 
 Use the gcloud dns managed-zones create command to create the zone:
 ```
