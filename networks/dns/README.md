@@ -10,15 +10,15 @@ match for the source location when the traffic source location doesn't match any
 You will learn how to:
 
 1. Launch client VMs, one in each ZONE
-2. Launch server VMs, one in each ZONE except ZONE3
+2. Launch server VMs, one in each ZONE except asia-southeast1
 3. Create a private zone, for example.com
 4. Create a Geolocation routing policy using gcloud commands
 5. Test the configuration
 
 # Architecture
 Use the default VPC network to create all the virtual machines (VM) and launch client VMs in 3 Google Cloud 
-locations: ZONE1, ZONE2 and ZONE3. To demonstrate the behavior of Geolocation routing policy, you will create 
-the server VMs only in 2 ZONEs: ZONE1 and ZONE2.
+locations: us-west1, europe-west1 and asia-southeast1. To demonstrate the behavior of Geolocation routing policy, you will create 
+the server VMs only in 2 ZONEs: us-west1 and europe-west1.
 
 ![arch](diagram/1.png)
 
@@ -97,30 +97,30 @@ Run the gcloud compute instances create command to create the client VMs in each
 
 1. Zone 1
 ```
-gcloud compute instances create us-client-vm --machine-type e2-medium --zone ZONE1
+gcloud compute instances create us-client-vm --machine-type e2-medium --zone us-west1
 ```
 
 2. Zone 2
 ```
-gcloud compute instances create us-client-vm --machine-type e2-medium --zone ZONE2
+gcloud compute instances create us-client-vm --machine-type e2-medium --zone europe-west1
 ```
 
 3. Zone 3
 ```
-gcloud compute instances create us-client-vm --machine-type e2-medium --zone ZONE3
+gcloud compute instances create us-client-vm --machine-type e2-medium --zone asia-southeast1
 ```
 
 # Launch Server VMs
 
 Now that the client VM's are up and running, the next step is to create the server VMs. You will use a 
 startup script to configure and set up the web servers. As mentioned earlier, you will create the server 
-VMs only in 2 ZONEs: ZONE1 and ZONE2.
+VMs only in 2 ZONEs: us-west1 and europe-west1.
 
-1. Launch server in ZONE1
+1. Launch server in us-west1
 
 ```
 gcloud compute instances create us-web-vm \
---zone=ZONE1 \
+--zone=us-west1 \
 --machine-type=e2-medium \
 --network=default \
 --subnet=default \
@@ -128,16 +128,16 @@ gcloud compute instances create us-web-vm \
 --metadata=startup-script='#! /bin/bash
  apt-get update
  apt-get install apache2 -y
- echo "Page served from: ZONE1" | \
+ echo "Page served from: us-west1" | \
  tee /var/www/html/index.html
  systemctl restart apache2'
  ```
 
- 2. Launch server in ZONE2
+ 2. Launch server in europe-west1
 
  ```
  gcloud compute instances create europe-web-vm \
---zone=ZONE2 \
+--zone=europe-west1 \
 --machine-type=e2-medium \
 --network=default \
 --subnet=default \
@@ -145,7 +145,7 @@ gcloud compute instances create us-web-vm \
 --metadata=startup-script='#! /bin/bash
  apt-get update
  apt-get install apache2 -y
- echo "Page served from: ZONE2" | \
+ echo "Page served from: europe-west1" | \
  tee /var/www/html/index.html
  systemctl restart apache2'
  ```
@@ -156,16 +156,16 @@ Before you configure Cloud DNS, note the Internal IP addresses of the web server
 create the routing policy. In this section, you will use the gcloud compute instances describe command to 
 save the internal IP addresses as environment variables.
 
-1. Command to save IP address for the vm in ZONE1:
+1. Command to save IP address for the vm in us-west1:
 
 ```
-export US_WEB_IP=$(gcloud compute instances describe us-web-vm --zone=ZONE1 --format="value(networkInterfaces.networkIP)")
+export US_WEB_IP=$(gcloud compute instances describe us-web-vm --zone=us-west1 --format="value(networkInterfaces.networkIP)")
 ```
 
-2. Command to save the IP address for vm in ZONE2:
+2. Command to save the IP address for vm in europe-west1:
 
 ```
-export EUROPE_WEB_IP=$(gcloud compute instances describe europe-web-vm --zone=ZONE2 --format="value(networkInterfaces.networkIP)")
+export EUROPE_WEB_IP=$(gcloud compute instances describe europe-web-vm --zone=europe-west1 --format="value(networkInterfaces.networkIP)")
 ```
 
 # Create the private zone
@@ -190,7 +190,7 @@ Use the gcloud beta dns record-sets create command to create the geo.example.com
 gcloud beta dns record-sets create geo.example.com \
 --ttl=5 --type=A --zone=example \
 --routing_policy_type=GEO \
---routing_policy_data="ZONE1=$US_WEB_IP;ZONE2=$EUROPE_WEB_IP"
+--routing_policy_data="us-west1=$US_WEB_IP;europe-west1=$EUROPE_WEB_IP"
 ```
 
 # Verify Cloud DNS Routing Policy
@@ -208,47 +208,47 @@ server VMs are behind the geo.example.com domain, you will use cURL command to a
 
 Since you are using a Geolocation policy, the expected result is that:
 
-The client in the US should always get a response from the ZONE1 region.
-The client in Europe should always get a response from the ZONE2 region.
+The client in the US should always get a response from the us-west1 region.
+The client in Europe should always get a response from the europe-west1 region.
 
-1. Testing from the client VM in ZONE1
+1. Testing from the client VM in us-west1
 
 Use the gcloud compute ssh command to log into the client VM:
 ```
-gcloud compute ssh us-client-vm --zone ZONE1 --tunnel-through-iap
+gcloud compute ssh us-client-vm --zone us-west1 --tunnel-through-iap
 ```
 
-cURL the `curl geo.example.com` endpoint & check for custom message from the startup script above for ZONE1
+cURL the `curl geo.example.com` endpoint & check for custom message from the startup script above for us-west1
 ```
 curl geo.example.com
 ```
 
-2. Testing from the client VM in ZONE2
+2. Testing from the client VM in europe-west1
 
 Use the gcloud compute ssh command to log into the client VM:
 ```
-gcloud compute ssh europe-client-vm --zone ZONE2 --tunnel-through-iap
+gcloud compute ssh europe-client-vm --zone europe-west1 --tunnel-through-iap
 ```
 
-cURL the `curl geo.example.com` endpoint & check for custom message from the startup script above for ZONE2
+cURL the `curl geo.example.com` endpoint & check for custom message from the startup script above for europe-west1
 ```
 curl geo.example.com
 ```
 
-3. Testing from the client VM in ZONE3
+3. Testing from the client VM in asia-southeast1
 
-So far you have tested the setup from ZONE1 and ZONE2. You have servers running in both the regions and have 
-matching record sets for both the regions in Cloud DNS routing policy. There is no matching policy item for ZONE3 
+So far you have tested the setup from us-west1 and europe-west1. You have servers running in both the regions and have 
+matching record sets for both the regions in Cloud DNS routing policy. There is no matching policy item for asia-southeast1 
 in the Cloud DNS routing policy that was created in this lab.
 
 The Geolocation policy will apply a "nearest" match for source location when the source of the traffic doesn't match 
-any policy items exactly. This means that the client in the ZONE3 region should be directed to the nearest web server.
+any policy items exactly. This means that the client in the asia-southeast1 region should be directed to the nearest web server.
 
 In this section, you will resolve the geo.example.com domain from the client VM in Asia and will analyze the response.
 
 SSH into the us-client-vm:
 ```
-gcloud compute ssh asia-client-vm --zone ZONE3 --tunnel-through-iap
+gcloud compute ssh asia-client-vm --zone asia-southeast1 --tunnel-through-iap
 ```
 
 Then access geo.example.com:
@@ -256,7 +256,7 @@ Then access geo.example.com:
 curl geo.example.com
 ```
 
-Analyze the output to see which server is responding to the request. Since there is no policy item for ZONE3, 
+Analyze the output to see which server is responding to the request. Since there is no policy item for asia-southeast1, 
 Cloud DNS will direct the client to the nearest server.
 
 # Delete lab resources
@@ -266,15 +266,15 @@ you no longer need to avoid unnecessary charges.
 
 ```
 #delete VMS
-gcloud compute instances delete -q us-client-vm --zone ZONE1
+gcloud compute instances delete -q us-client-vm --zone us-west1
 
-gcloud compute instances delete -q us-web-vm --zone ZONE1
+gcloud compute instances delete -q us-web-vm --zone us-west1
 
-gcloud compute instances delete -q europe-client-vm --zone ZONE2
+gcloud compute instances delete -q europe-client-vm --zone europe-west1
 
-gcloud compute instances delete -q europe-web-vm --zone ZONE2
+gcloud compute instances delete -q europe-web-vm --zone europe-west1
 
-gcloud compute instances delete -q asia-client-vm --zone ZONE3
+gcloud compute instances delete -q asia-client-vm --zone asia-southeast1
 
 #delete FW rules
 gcloud compute firewall-rules delete -q allow-http-traffic
