@@ -180,6 +180,11 @@ Use the gcloud dns managed-zones create command to create the zone:
 gcloud dns managed-zones create example --description=test --dns-name=example.com --networks=default --visibility=private
 ```
 
+Note: 
+Managed zones are dns zone that you managed using Cloud DNS.
+- Public zones are managed zones to resolve dns names from the Internet (--visibility=public).
+- Private zones are managed zones to resolve dns names from VPC networks (--visibility=private).
+
 # Create Cloud DNS Routing Policy
 
 In this section, configure the Cloud DNS Geolocation Routing Policy. You will create a record set in the example.com 
