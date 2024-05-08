@@ -112,3 +112,69 @@ SELECT PG_CREATE_LOGICAL_REPLICATION_SLOT('test_replication', 'pgoutput');
     - Region <REGION>
     - Click Create.
 
+3. Create stream
+
+    Create the stream which connects the connection profiles created above and defines the configuration for the data to stream from source to destination.
+
+    - In the Cloud console, navigate to the Streams tab and click Create Stream.
+    - Use test-stream as the name and ID of the stream.
+    - Region REGION
+    - Select PostgreSQL as the source type
+    - Select BigQuery as destination type
+    - Click CONTINUE.
+
+4. Define & Configure the source
+
+    - Select the postgres-cp connection profile created in the previous step.
+    - [Optional] Test connectivity by clicking RUN TEST
+    - Click CONTINUE.
+    - Specify the replication slot name as test_replication.
+    - Specify the publication name as test_publication.
+    - Select the test schema for replication.
+    - Click Continue.
+
+5. Define & Configure the Destination
+
+    - Select the bigquery-cp connection profile created in the previous step, then click Continue.
+    - Choose Region and select REGION as the BigQuery dataset location.
+    - Set the staleness limit to 0 seconds.
+    - Click Continue.
+
+Finally, validate the stream details by clicking RUN VALIDATION. Once validation completes successfully, click CREATE AND START.
+
+# View the data in BigQuery
+
+- In the Google Cloud console, from the Navigation menu go to Analytics > BigQuery > SQL workspace.
+- In the SQL workspace explorer, expand the project node to see the list of datasets.
+- Expand the test dataset node.
+- Click on the example_table table.
+- Click on the PREVIEW tab to see the data in BigQuery.
+
+# Check that changes in the source are replicated to BigQuery
+
+Run the following command in Cloud Shell to connect to the Cloud SQL database (the password is pwd):
+
+```
+gcloud sql connect postgres-db --user=postgres
+```
+
+Run the following SQL commands to make some changes to the data:
+
+```
+INSERT INTO test.example_table (text_col, int_col, date_col) VALUES
+('abc', 0, '2022-10-01 00:00:00'),
+('def', 1, NULL),
+('ghi', -987, NOW());
+
+UPDATE test.example_table SET int_col=int_col*2; 
+
+DELETE FROM test.example_table WHERE text_col = 'abc';
+```
+
+Open the BigQuery SQL workspace and run the following query to see the changes in BigQuery:
+
+```
+SELECT * FROM test.example_table ORDER BY id;
+```
+
+
