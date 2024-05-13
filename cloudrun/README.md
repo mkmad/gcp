@@ -6,6 +6,24 @@ Cloud Run is built from Knative, letting you choose to run your containers eithe
 
 The goal of this lab is for you to build a simple containerized application image and deploy it to Cloud Run.
 
+## Difference between Cloud Functions and Cloud Run
+
+Google Cloud Functions and Google Cloud Run are both serverless compute platforms offered by Google Cloud Platform (GCP), but they cater to different use cases and have distinct characteristics:
+
+*Cloud Functions:*
+
+- Event-Driven: Cloud Functions are primarily designed to be triggered by events, such as changes in Cloud Storage, Pub/Sub messages, or HTTP requests.
+- Focus on Code: You focus solely on writing the code for your function, and GCP handles the underlying infrastructure and scaling.
+- Limited Customization: Cloud Functions offer less flexibility in terms of runtime environments and configuration compared to Cloud Run.
+- Simplified Development: Easier to get started with and ideal for simple, event-driven tasks.
+
+*Cloud Run:*
+
+- Container-Based: Cloud Run runs stateless containers, giving you greater control over the runtime environment and dependencies.
+- HTTP-Focused: Cloud Run is primarily designed to serve web applications and APIs over HTTP.
+- Highly Customizable: You have the flexibility to use any programming language, library, or framework supported by Docker.
+- Advanced Use Cases: Suitable for complex applications that require more customization and control.
+
 # Objectives
 
 - Enable the Cloud Run API.
@@ -161,13 +179,4 @@ Service URL: https://helloworld-h6cp412q3a-uc.a.run.app
 
 - You can now visit your deployed container by opening the service URL in any browser window. This is a functioning url that points to the deployed container.
 - From the Navigation menu, in the Serverless section, click Cloud Run and you should see your helloworld service listed.
-
-
-
-
-
-
-
-
-
 
