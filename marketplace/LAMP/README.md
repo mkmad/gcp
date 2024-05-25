@@ -39,3 +39,17 @@ phpMyAdmin	          PHP administration tool
 - If a Welcome to Deployment Manager message appears, click Close to dismiss it.
 
 When the deployment is complete, click the Site address link in the right pane. (If the website is not responding, wait 30 seconds and try again.) If you see a redirection notice, click on that link to view your new site.
+
+In the SSH window, enter the following command to shut down all the running services:
+```
+sudo /opt/bitnami/ctlscript.sh stop
+```
+
+Refresh the browser window for the LAMP UI. You will no longer see the LAMP interface because the service was shut down.
+
+In the SSH window, enter the following command to restart the services:
+```
+sudo /opt/bitnami/ctlscript.sh restart
+```
+
+Return to the browser window for the LAMP UI and refresh it. You may have to do it a couple of times before the service is reachable.

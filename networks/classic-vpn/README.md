@@ -4,7 +4,24 @@ This hands-on lab will show you how to create secure, high-throughput VPN and te
 
 Secure communication between Google Cloud and other clouds or on-premises systems is a common, critical need. Fortunately, Google Cloud makes it easy for you to create a secure Internet Protocol security (IPsec) virtual private networks (VPNs) to achieve this goal. If a single tunnel does not provide necessary throughput, Google Cloud can smoothly distribute traffic across multiple tunnels to provide additional bandwidth.
 
-## Objectives
+## Classic vs New (HA) VPNs
+
+In Google Cloud Platform (GCP), both gcloud compute target-vpn-gateways and gcloud compute vpn-gateways are related to setting up Virtual Private Networks (VPNs) to connect your on-premises network or another cloud environment securely to your Google Cloud Virtual Private Cloud (VPC) network. However, there's a crucial distinction:
+
+### Classic VPN:
+
+- Refers to the older generation of Cloud VPN, often called "Classic VPN."
+- Uses static routing to establish VPN tunnels.
+- Offers basic features and limited scalability compared to the newer option.
+
+### Newer generation of Cloud VPN, known as "High Availability VPN" (HA VPN).
+- Employs dynamic routing protocols like Border Gateway Protocol (BGP) for more robust and flexible routing.
+- Provides higher throughput, improved reliability, and better scalability for larger deployments.
+- Supports additional features like multiple tunnels and equal-cost multipath (ECMP) routing.
+
+![arch](diagram/1.png)
+
+## Objectives for Classic VPN
 
 ### Create VPN
 - Create a Virtual Private Cloud (VPC) named cloud to simulate your Google Cloud network, and a VPC named on-prem (on-premises) to simulate an external network.
@@ -131,6 +148,8 @@ gcloud compute vpn-tunnels create on-prem-tunnel1 --peer-address $cloud_gw1_ip \
 
 ### Create the VPN tunnel from cloud to on-prem:
 
+**Note: Its the VPN tunnel that attaches the IP to the vpn gateway**
+
 ```
 gcloud compute vpn-tunnels create cloud-tunnel1 --peer-address $on_prem_gw_ip \
     --target-vpn-gateway cloud-gw1 --ike-version 2 --local-traffic-selector 0.0.0.0/0 \
@@ -138,6 +157,8 @@ gcloud compute vpn-tunnels create cloud-tunnel1 --peer-address $on_prem_gw_ip \
 ```
 
 ### Add routes from the subnets through the two tunnels.
+
+**These rules tells gcp how the traffic should be routed to the networks**
 
 Route traffic from the on-prem VPC to the cloud 10.0.1.0/24 range into the tunnel:
 ```
