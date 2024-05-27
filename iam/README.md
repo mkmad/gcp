@@ -239,7 +239,7 @@ Updated property [core/project].
 Assign the viewer role to the second user in the second project
 
 ```
-[student-04-a6545d93d4b1@centos-clean ~]$ gcloud projects add-iam-policy-binding gcloud config set project $PROJECTID2 --member user:student-01-0f2cefdfc474@qwiklabs.net --role=roles/viewer
+[student-04-a6545d93d4b1@centos-clean ~]$ gcloud projects add-iam-policy-binding qwiklabs-gcp-04-631da58f3d4a --member user:student-01-0f2cefdfc474@qwiklabs.net --role=roles/viewer
 
 Updated IAM policy for project [qwiklabs-gcp-04-631da58f3d4a].
 bindings:

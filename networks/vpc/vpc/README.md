@@ -11,7 +11,7 @@ with an auto subnet network.
 In this lab you use gcloud to create two custom VPC networks with subnets, firewall rules, and VM instances, then test 
 the networks' ability to allow traffic from the public internet.
 
-# Understanding Regions and Zones
+## Understanding Regions and Zones
 
 Certain Compute Engine resources live in regions or zones. A region is a specific geographical location where you can run 
 your resources. Each region has one or more zones. For example, the us-central1 region denotes a region in the Central 
@@ -31,13 +31,13 @@ To attach a persistent disk to a virtual machine instance, both resources must b
 assign a static IP address to an instance, the instance must be in the same region as the static IP.
 
 
-# Google Cloud Network Concepts
+## Google Cloud Network Concepts
 
 Google Cloud Platform supports Projects, Networks, and Subnetworks to provide flexible, logical isolation of unrelated resources.
 
 ![arch](diagram/1.png)
 
-**Projects**\
+### Projects
 Projects are the outermost container and are used to group resources that share the same trust boundary. Many developers map 
 Projects to teams since each Project has its own access policy (IAM) and member list. Projects also serve as a collector of 
 billing and quota details reflecting resource consumption. Projects contain Networks which contain Subnetworks, Firewall rules, 
@@ -46,12 +46,12 @@ and Routes (see below architecture diagrams for illustration).
 ![arch](diagram/2.png)
 
 
-**Networks**\
+### Networks
 Networks directly connect your resources to each other and to the outside world. Networks, using Firewalls, also house the access 
 policies for incoming and outgoing connections. Networks can be Global (offering horizontal scalability across multiple Regions) 
 or Regional (offering low-latency within a single Region).
 
-**Subnetworks**\
+### Subnetworks
 Subnetworks allow you to group related resources (Compute Engine instances) into RFC1918 private address spaces. Subnetworks can 
 only be Regional. A subnetwork can be in auto mode or custom mode.
 
@@ -60,14 +60,14 @@ only be Regional. A subnetwork can be in auto mode or custom mode.
 - A custom mode network has no subnets at creation. In order to create an instance in a custom mode network, you must first create a subnetwork 
   in that region and specify its IP range. A custom mode network can have zero, one, or many subnets per region.
 
-**Firewalls**\
+### Firewalls
 Each network has a default firewall that blocks all inbound traffic to instances. To allow traffic to come into an instance, you must create 
 "allow" rules for the firewall. Additionally, the default firewall allows traffic from instances unless you configure it to block outbound 
 connections using an "egress" firewall configuration. Therefore, by default you can create "allow" rules for traffic you wish to pass ingress, 
 and "deny" rules for traffic you wish to restrict egress. You may also create a default-deny policy for egress and prohibit external 
 connections entirely.
 
-**Network route**
+### Network route
 All networks have routes created automatically to the Internet (default route) and to the IP ranges in the network. The route names are 
 automatically generated and will look different for each project.
 
@@ -81,7 +81,47 @@ Additional Routes can be created to send traffic to an instance, a VPN gateway, 
 modified to tailor the desired network architecture. Routes and Firewalls work together to ensure your traffic gets where it needs 
 to go.
 
-# Create a VPC Network
+## Explore the default network
+
+Each Google Cloud project has a default network with subnets, routes, and firewall rules.
+
+### Subnets for default network
+The default network has a subnet in each Google Cloud region.
+
+- In the Cloud Console, on the Navigation menu (Navigation menu icon), click VPC network > VPC networks.
+- Notice the default network with its subnets.
+Each subnet is associated with a Google Cloud region and a private RFC 1918 CIDR block for its internal IP addresses range 
+and a gateway.
+
+### Routes for default network
+
+Routes tell VM instances and the VPC network how to send traffic from an instance to a destination, either inside the network or 
+outside Google Cloud. Each VPC network comes with some default routes to route traffic among its subnets and send traffic from eligible 
+instances to the internet.
+
+- In the left pane, click Routes.
+- Notice that there is a route for each subnet and one for the `Default internet gateway (0.0.0.0/0)`.
+
+These routes are managed for you, but you can create custom static routes to direct some packets to specific destinations. For example, 
+you can create a route that sends all outbound traffic to an instance configured as a **NAT gateway**.
+
+### Firewall rules for default network
+
+Each VPC network implements a distributed virtual firewall that you can configure. Firewall rules allow you to control which packets 
+are allowed to travel to which destinations. Every VPC network has two implied firewall rules that block all incoming connections and 
+allow all outgoing connections.
+
+Notice that there are 4 Ingress firewall rules for the default network:
+
+- default-allow-icmp
+- default-allow-rdp
+- default-allow-ssh
+- default-allow-internal
+
+These firewall rules allow ICMP, RDP, and SSH ingress traffic from anywhere (0.0.0.0/0) and all TCP, UDP, and ICMP traffic within the network
+
+
+## Create a VPC Network (labnet)
 
 ```
 (qwiklabs-gcp-00-32a20e7f9a7a)$ gcloud compute networks create labnet --subnet-mode=custom
@@ -111,7 +151,7 @@ labnet is the name of the network you're creating
 --subnet-mode=custom you're passing the subnet mode flag and the type of subnet you're creating, "custom".
 
 
-# Create a Subnetwork
+### Create a Subnetwork
 
 When you create a subnetwork, its name must be unique in that project for that region, even across networks. 
 The same name can appear twice in a project as long as each one is in a different region.
@@ -136,7 +176,7 @@ INTERNAL_IPV6_PREFIX:
 EXTERNAL_IPV6_PREFIX:
 ```
 
-# Viewing networks
+### Viewing networks
 
 ```
 (qwiklabs-gcp-00-32a20e7f9a7a)$ gcloud compute networks list
@@ -153,7 +193,7 @@ IPV4_RANGE:
 GATEWAY_IPV4: 
 ```
 
-# Describing a network
+### Describing a network
 
 Use describe to view network details, such as its peering connections and subnets.
 
@@ -175,7 +215,7 @@ x_gcloud_bgp_routing_mode: REGIONAL
 x_gcloud_subnet_mode: CUSTOM
 ```
 
-# List subnets
+### List subnets
 
 You can list all subnets in all networks in your project, or you can show only the subnets for a particular 
 network or region
@@ -200,7 +240,7 @@ INTERNAL_IPV6_PREFIX:
 EXTERNAL_IPV6_PREFIX: 
 ```
 
-# Creating firewall rules
+### Creating firewall rules
 
 Auto networks include default rules, custom networks do not include any firewall rules. Firewall rules are 
 defined at the network level, and only apply to the network where they are created.
@@ -235,7 +275,7 @@ DENY:
 DISABLED: False
 ```
 
-# Viewing firewall rules details
+### Viewing firewall rules details
 
 Inspect the firewall rules to see its name, applicable network, and components, including whether the rule is enabled or disabled:
 
@@ -262,12 +302,12 @@ sourceRanges:
 - 0.0.0.0/0
 ```
 
-# Create another network
+## Create another VPN network (privatenet)
 
 Now you'll create a another network, add firewall rules to it, then add VMs to both networks to test the ability 
 to communicate with the networks.
 
-create the privatenet network
+### create the privatenet network
 
 ```
 (qwiklabs-gcp-00-32a20e7f9a7a)$ gcloud compute networks create privatenet --subnet-mode=custom
@@ -286,7 +326,7 @@ $ gcloud compute firewall-rules create <FIREWALL_NAME> --network privatenet --al
 $ gcloud compute firewall-rules create <FIREWALL_NAME> --network privatenet --allow tcp:22,tcp:3389,icmp
 ```
 
-Create the private-sub subnet
+### Create the private-sub subnet
 
 ```
 (qwiklabs-gcp-00-32a20e7f9a7a)$ gcloud compute networks subnets create private-sub \
@@ -304,7 +344,7 @@ INTERNAL_IPV6_PREFIX:
 EXTERNAL_IPV6_PREFIX: 
 ```
 
-Create the firewall rules for privatenet
+### Create the firewall rules for privatenet
 
 ```
 (qwiklabs-gcp-00-32a20e7f9a7a)$ gcloud compute firewall-rules create privatenet-deny \
@@ -323,7 +363,7 @@ DENY: icmp,tcp:22
 DISABLED: False
 ```
 
-# Create VM instances
+## Create VM instances
 
 Create two VM instances in the subnets:
 
@@ -383,7 +423,7 @@ EXTERNAL_IP: 35.236.245.109
 STATUS: RUNNING
 ```
 
-# Explore the connectivity
+## Explore the connectivity
 
 When you created the networks, you applied firewall rules to each - so one network allows `INGRESS` traffic, 
 and the other denies `INGRESS` traffic.
@@ -413,7 +453,7 @@ PING 35.236.245.109 (35.236.245.109) 56(84) bytes of data.
 3 packets transmitted, 0 received, 100% packet loss, time 2047ms
 ```
 
-# Internal DNS for VMs
+## Internal DNS for VMs
 
 Each instance has a metadata server that also acts as a DNS resolver for that instance. DNS lookups are performed 
 for instance names. The metadata server itself stores all DNS information for the local network and queries Google's 
@@ -423,7 +463,7 @@ An internal fully qualified domain name (FQDN) for an instance looks like this: 
 You can always connect from one instance to another using this FQDN. If you want to connect to an instance using, for example, 
 just hostName, you need information from the internal DNS resolver that is provided as part of Compute Engine.
 
-# TraceRoute
+## TraceRoute
 
 Traceroute is a tool to trace the path between two hosts. A traceroute can be a helpful first step to uncovering many 
 different types of network problems. Support or network engineers often ask for a traceroute when diagnosing network 
@@ -442,7 +482,7 @@ The type of packet sent varies by implementation. Under Linux, UDP packets are s
 with an ICMP Port Unreachable. Windows and the mtr tool by default use ICMP echo requests (like ping), so the final destination answers with 
 an ICMP echo reply.
 
-# iPerf
+## iPerf
 
 iPerf is a widely used network testing tool that can measure the bandwidth and the performance of network links. In Google Cloud Platform (GCP) 
 networking, iPerf can be particularly useful for several scenarios:

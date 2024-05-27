@@ -148,7 +148,9 @@ Region	        Region
 - For Name, type nat-router.
 - Click Create.
 
+```
 Note: The NAT mapping section allows you to choose the subnets to map to the NAT gateway. You can also manually assign static IP addresses that should be used when performing NAT. 
+```
 
 # Verify the Cloud NAT gateway
 
