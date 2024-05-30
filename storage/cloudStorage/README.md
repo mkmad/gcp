@@ -38,7 +38,7 @@ service apache2 restart
 - Leave the remaining settings as their defaults, and click Create.
 - On the VM instances page, copy the bloghost VM instance's internal and external IP addresses to a text editor for use later in this lab.
 
-# #Create a Cloud Storage bucket using the gcloud storage command line
+## Create a Cloud Storage bucket using the gcloud storage command line
 
 In Cloud Shell, the DEVSHELL_PROJECT_ID environment variable contains your project ID. Enter this command to make a bucket named after your project ID:
 
