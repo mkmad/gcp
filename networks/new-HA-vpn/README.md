@@ -6,7 +6,7 @@ HA VPN is a regional per VPC, VPN solution. HA VPN gateways have two interfaces,
 
 In this lab you create a global VPC called vpc-demo, with two custom subnets in REGION 2 and REGION 1. In this VPC, you add a Compute Engine instance in each region. You then create a second VPC called on-prem to simulate a customer's on-premises data center. In this second VPC, you add a subnet in region REGION 1 and a Compute Engine instance running in this region. Finally, you add an HA VPN and a cloud router in each VPC and run two tunnels from each HA VPN gateway before testing the configuration to verify the 99.99% SLA.
 
-![arch](diagram/1.png)
+![arch](diagram/2.png)
 
 ## Objectives
 
@@ -35,7 +35,11 @@ Resources that live in a zone are referred to as zonal resources. Virtual machin
 To attach a persistent disk to a virtual machine instance, both resources must be in the same zone. Similarly, if you want to 
 assign a static IP address to an instance, the instance must be in the same region as the static IP.
 
+![arch](diagram/3.png)
+
 ## Set up a Global VPC environment
+
+![arch](diagram/1.png)
 
 Set up a Global VPC with two custom subnets and two VM instances running in each zone.
 
@@ -187,7 +191,7 @@ In this lab you are simulating an on-premises setup with both VPN gateways in Go
     --interface 1
     ```
 
-3. Create the first VPN tunnel in the on-prem network:
+3. Create the first VPN tunnel in the `on-prem` network:
     ```
     gcloud compute vpn-tunnels create on-prem-tunnel0 \
     --peer-gcp-gateway vpc-demo-vpn-gw1 \
@@ -199,7 +203,7 @@ In this lab you are simulating an on-premises setup with both VPN gateways in Go
     --interface 0
     ```
 
-4. Create the second VPN tunnel in the on-prem network:
+4. Create the second VPN tunnel in the `on-prem` network:
     ```
     gcloud compute vpn-tunnels create on-prem-tunnel1 \
     --peer-gcp-gateway vpc-demo-vpn-gw1 \
@@ -210,10 +214,6 @@ In this lab you are simulating an on-premises setup with both VPN gateways in Go
     --vpn-gateway on-prem-vpn-gw1 \
     --interface 1
     ```
-
-## Create Border Gateway Protocol (BGP) peering for each tunnel
-
-Configure BGP peering for each VPN tunnel between vpc-demo and VPC on-prem. HA VPN requires dynamic routing to enable 99.99% availability.
 
 ### Border Gateway Protocol Routing
 
@@ -257,6 +257,9 @@ BGP is not the only way to route traffic over VPNs; static routes or dynamic rou
 ## Create Border Gateway Protocol (BGP) peering for each tunnel
 
 Configure BGP peering for each VPN tunnel between `vpc-demo` and VPC `on-prem`. HA VPN requires dynamic routing to enable 99.99% availability.
+
+![arch](diagram/4.png)
+
 
 1. Create the router interface for tunnel0 in network `vpc-demo`:
     ```
@@ -330,7 +333,7 @@ Configure BGP peering for each VPN tunnel between `vpc-demo` and VPC `on-prem`. 
 
 8. Create the BGP peer for tunnel1 in network `on-prem` (peer to route interface for `tunnel1` in network `vpc-demo`):
     ```
-    gcloud compute routers add-bgp-peer  on-prem-router1 \
+    gcloud compute routers add-bgp-peer on-prem-router1 \
     --peer-name bgp-vpc-demo-tunnel1 \
     --interface if-tunnel1-to-vpc-demo \
     --peer-ip-address 169.254.1.1 \
@@ -346,7 +349,7 @@ Verify the router configurations in both VPCs.
 1. View details of Cloud Router vpc-demo-router1 to verify its settings
     ```
     gcloud compute routers describe vpc-demo-router1 \
-    --region "REGION"
+    --region "REGION1"
 
 
     bgp:
@@ -396,7 +399,7 @@ Verify the router configurations in both VPCs.
 
     ```
     gcloud compute routers describe on-prem-router1 \
-    --region "REGION"
+    --region "REGION1"
 
     bgp:
     advertiseMode: DEFAULT
@@ -470,8 +473,6 @@ HA VPN is a regional resource and cloud router that by default only sees the rou
     ```
     gcloud compute networks update vpc-demo --bgp-routing-mode GLOBAL
     ```
-
-
 
 ## Verify private connectivity over VPN
 Verify private connectivity over VPN between each VPC and enable global routing mode for the VPC

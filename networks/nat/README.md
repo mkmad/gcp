@@ -4,7 +4,7 @@ Google Cloud’s Network Address Translation (NAT) service enables you to provis
 
 In this lab, you will configure Private Google Access and Cloud NAT for a VM instance that doesn't have an external IP address. Then, you will verify access to public IP addresses of Google APIs and services and other connections to the internet. Finally, you will use Cloud NAT logging to record connections made in your gateway.
 
-# Objectives
+## Objectives
 
 In this lab, you will learn how to perform the following tasks:
 
@@ -12,11 +12,12 @@ In this lab, you will learn how to perform the following tasks:
 - Create a bastion host to connect to the VM that doesn't have an external IP address.
 - Enable Private Google Access on a subnet.
 - Verify access to public IP addresses of Google APIs and services
-- Configure a Cloud NAT gateway. 
+- Configure a Cloud NAT gateway (for outbound traffic from Vms with no external Ips). 
 - Verify connections to the internet.
+- Create a L4 or a L7 Loadbalancer (for inbound traffic to Vms with no external Ips).
 - Log NAT connections with Cloud NAT logging.
 
-# Create a VPC network and firewall rules
+## Create a VPC network and firewall rules
 
 - In the Cloud Console, on the Navigation menu (Navigation menu icon), click VPC network > VPC networks.
 - Click Create VPC Network.
@@ -44,7 +45,7 @@ Protocols and ports	        Specified protocols and ports
 - For tcp, specify port 22.
 - Click Create.
 
-# Create the VM instance with no public IP address
+## Create the VM instance with no public IP address
 
 - In the Cloud Console, on the Navigation menu (Navigation menu icon), click Compute Engine > VM instances.
 - Click Create Instance.
@@ -68,7 +69,7 @@ External IPv4 address	      None
 - Click Create, and wait for the VM instance to be created.
 - On the VM instances page, verify that the External IP of vm-internal is None.
 
-# Create the bastion host
+## Create the bastion host
 
 Because vm-internal has no external IP address, it can only be reached by other instances on the network or via a managed VPN gateway. This includes SSH access to vm-internal, which is grayed out (unavailable) in the Cloud Console.
 
@@ -102,7 +103,7 @@ From the vm-bastion SSH terminal, verify external connectivity by running the fo
 ping -c 2 www.google.com
 ```
 
-# SSH to vm-bastion and verify access to vm-internal
+## SSH to vm-bastion and verify access to vm-internal
 
 Verify that you can access vm-internal through vm-bastion.
 
@@ -111,7 +112,7 @@ Connect to vm-internal by running the following command in the bastion host shel
 gcloud compute ssh vm-internal --zone=Zone --internal-ip
 ```
 
-# Enable private Google access
+## Enable private Google access
 
 VM instances that have no external IP addresses can use Private Google Access to reach external IP addresses of Google APIs and services. By default, Private Google Access is disabled on a VPC network.
 
@@ -129,7 +130,7 @@ Now you can access Google APIs and services through vm-internal. For example thi
 gsutil cp gs://[my_bucket]/*.png .
 ```
 
-# Configure a Cloud NAT gateway
+## Configure a Cloud NAT gateway (For Outbound traffic for VMs with internal Ips)
 
 Although vm-internal can now access certain Google APIs and services without an external IP address, the instance cannot access the internet for updates and patches. You will now configure a Cloud NAT gateway, which allows vm-internal to reach the internet.
 
@@ -152,7 +153,7 @@ Region	        Region
 Note: The NAT mapping section allows you to choose the subnets to map to the NAT gateway. You can also manually assign static IP addresses that should be used when performing NAT. 
 ```
 
-# Verify the Cloud NAT gateway
+## Verify the Cloud NAT gateway
 
 For vm-bastion, click SSH to launch a terminal and connect.
 Connect to vm-internal by running the following command:
@@ -168,7 +169,7 @@ This should now work!
 
 Note: Connecting to `vm-internal` is via `baston` host, but `vm-internal` has access to internet via `nat-router` + `nat-gateway`.
 
-# Configure and view logs with Cloud NAT Logging
+## Configure and view logs with Cloud NAT Logging
 
 Cloud NAT logging allows you to log NAT connections and errors. When Cloud NAT logging is enabled, one log entry can be generated for each of the following scenarios:
 
@@ -183,7 +184,8 @@ You can opt to log both kinds of events, or just one or the other. Created logs 
 - Under cloud logging (Stackdriver), select Translation and errors and then click Save.
 
 
+## Configure a L4 or a L7 Loadbalancer (For Incoming traffic to Vms with internal Ips)
 
+Refer to this Readme doc for setting up the loadbalancers
 
-
-
+[Loadbalancer Readme](./../loadbalancers/README.md)

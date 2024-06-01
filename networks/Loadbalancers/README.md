@@ -10,7 +10,7 @@ There are several ways you can load balance on Google Cloud. This lab takes you 
 ## What you'll learn
 - Set up a network load balancer.
 - Set up an HTTP load balancer.
-- Get hands-on experience learning the differences between network load balancers and HTTP load balancers.
+- How to choose the right load balancer.
 
 ## Create multiple web server instances
 
@@ -78,8 +78,23 @@ For this load balancing scenario, create three Compute Engine VM instances and i
         --target-tags network-lb-tag --allow tcp:80
     ```
 
-## Create a L4 Network LoadBalancer
+## Create a L4 Network LoadBalancer (External with no-proxy/passthrough setup)
 
+### External and Internal Network Load Balancers (NLBs) in Google Cloud Platform (GCP)
+
+The choice between an eNLB and iNLB depends on whether you need to expose your application to the internet or keep it internal within your VPC network. If your application needs to be publicly accessible, an eNLB is the right choice. If it's an internal application or service, an iNLB is more suitable.
+
+### Internal NLBs distribute traffic within your VPC network. 
+They operate at layer 4 of the OSI model (transport layer) and primarily support TCP and UDP traffic. GCP does not have a distinct "TCP Proxy" or a "SSL Proxy" concept for internal NLBs like it does for external ones. 
+
+![arch](diagram/5.png)
+
+### External Network Loadbalancers can use a proxy or a passthrough setup:
+
+- TCP Proxy: A TCP proxy is used when you're expecting TCP traffic and want the NLB to terminate the TCP connections from clients and create new connections to your backend services.
+- SSL Proxy: An SSL proxy is used when you're expecting encrypted client traffic (HTTPS) and want the NLB to terminate the SSL connections, decrypt the traffic, and then create new connections to your backend services.
+
+#### The architecture of a External Network Load balancer depends on whether you use a back-end service-based network load balancer or a target-pool-based network load balancer (In this case, we use target-pool with a passtrough proxy setup). 
 ![arch](diagram/1.png)
 
 
@@ -96,7 +111,9 @@ For this load balancing scenario, create three Compute Engine VM instances and i
 
 3. Add a target pool in the same region as your instances. Run the following to create the target pool and use the health check, which is required for the service to function:
 
-    A target pool is a group of backend instances that receive incoming traffic from external passthrough Network Load Balancers. All backend instances of a target pool must reside in the same Google Cloud region. External passthrough Network Load Balancers can use either a backend service or a target pool to define the group of backend instances.
+    A target pool is a group of backend instances that receive incoming traffic from external passthrough Network Load Balancers. All backend instances of a target pool must reside in the same Google Cloud region. External passthrough Network Load Balancers can use either a backend service or a target pool to define the group of backend instances. 
+
+    These target pools can only be used with forwarding rules that can handle TCP and UDP traffic.
 
     ```
     gcloud compute target-pools create www-pool \
@@ -134,13 +151,15 @@ For this load balancing scenario, create three Compute Engine VM instances and i
     while true; do curl -m1 $IPADDRESS; done
     ```
 
-## Create a L7 HTTP Load Balancer
+## Create a L7 HTTP(S) Load Balancer
 
-![arch](diagram/2.png)
+![arch](diagram/4.png)
 
 HTTP(S) Load Balancing is implemented on Google Front End (GFE). GFEs are distributed globally and operate together using Google's global network and control plane. You can configure URL rules to route some URLs to one set of instances and route other URLs to other instances.
 
 Requests are always routed to the instance group that is closest to the user, if that group has enough capacity and is appropriate for the request. If the closest group does not have enough capacity, the request is sent to the closest group that does have capacity.
+
+![arch](diagram/2.png)
 
 To set up a load balancer with a Compute Engine backend, your VMs need to be in an instance group. The managed instance group provides VMs running the backend servers of an external HTTP load balancer. For this lab, backends serve their own hostnames.
 
@@ -175,7 +194,7 @@ To set up a load balancer with a Compute Engine backend, your VMs need to be in 
     --template=lb-backend-template --size=2 --zone=Zone
     ```
 
-3. Create the fw-allow-health-check firewall rule.
+3. Create the `fw-allow-health-check` firewall rule.
 
     ```
     gcloud compute firewall-rules create fw-allow-health-check \
@@ -249,7 +268,7 @@ To set up a load balancer with a Compute Engine backend, your VMs need to be in 
     --url-map web-map-http
     ```
 
-10. Create a global forwarding rule to route incoming requests to the proxy:
+10. Create a global forwarding rule to route incoming requests to the proxy using the global static external IP from step 4:
 
     ```
     gcloud compute forwarding-rules create http-content-rule \
@@ -258,3 +277,9 @@ To set up a load balancer with a Compute Engine backend, your VMs need to be in 
     --target-http-proxy=http-lb-proxy \
     --ports=80
     ```
+
+## How to choose the correct LoadBalancer
+To determine which Cloud Load Balancing product to use, you must first determine what traffic type your load balancers must handle.
+
+![arch](diagram/6.png)
+
