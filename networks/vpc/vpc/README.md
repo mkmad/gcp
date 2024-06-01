@@ -19,11 +19,11 @@ United States that has zones us-central1-a, us-central1-b, us-central1-c, and us
 
 Regions	Zones
 ```
-Western US	us-west1-a, us-west1-b
-Central US	us-central1-a, us-central1-b, us-central1-d, us-central1-f
-Eastern US	us-east1-b, us-east1-c, us-east1-d
+Western US	    us-west1-a, us-west1-b
+Central US	    us-central1-a, us-central1-b, us-central1-d, us-central1-f
+Eastern US	    us-east1-b, us-east1-c, us-east1-d
 Western Europe	europe-west1-b, europe-west1-c, europe-west1-d
-Eastern Asia	asia-east1-a, asia-east1-b, asia-east1-c
+Eastern Asia	  asia-east1-a, asia-east1-b, asia-east1-c
 ```
 
 Resources that live in a zone are referred to as zonal resources. Virtual machine Instances and persistent disks live in a zone. 
