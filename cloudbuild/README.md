@@ -6,43 +6,43 @@ Cloud Run is built from Knative, letting you choose to run your containers eithe
 
 The goal of this lab is for you to build a simple containerized application image and deploy it to Cloud Run.
 
-# Objectives
+## Objectives
 
 - Enable the Cloud Run API.
 - Create a simple Node.js application that can be deployed as a serverless, stateless container.
 - Containerize your application and upload to Container Registry (now called "Artifact Registry.")
-- Deploy a containerized application on Cloud Run.
+- Deploy a containerized application on Cloud Build cli and Cloud Build config file.
 - Delete unneeded images to avoid incurring extra storage charges.
 
-# Enable the Cloud Run API and configure your Shell environment
+## Enable the Cloud Run API and configure your Shell environment
 
-- From Cloud Shell, enable the Cloud Run API :
+### From Cloud Shell, enable the Cloud Run API :
 
 ```
 gcloud services enable run.googleapis.com
 ```
 
-Set the compute region:
+### Set the compute region:
 
 ```
 gcloud config set compute/region us-central1
 ```
 
-Create a LOCATION environment variable:
+### Create a LOCATION environment variable:
 
 ```
 export LOCATION=us-central1
 ```
 
-# Write the sample application
+## Write the sample application
 
-- In Cloud Shell create a new directory named helloworld, then move your view into that directory:
+### In Cloud Shell create a new directory named helloworld, then move your view into that directory:
 
 ```
 mkdir helloworld && cd helloworld
 ```
 
-- Create a package.json file, then add the following content to it:
+### Create a package.json file, then add the following content to it:
 
 ```
 {
@@ -61,7 +61,7 @@ mkdir helloworld && cd helloworld
 }
 ```
 
-- In the same directory, create a index.js file, and copy the following lines into it:
+### In the same directory, create a index.js file, and copy the following lines into it:
 
 ```
 const express = require('express');
@@ -78,9 +78,9 @@ app.listen(port, () => {
 });
 ```
 
-# Containerize your app and upload it to Artifact Registry
+## Containerize your app and upload it to Artifact Registry
 
-- Create a Dockerfile in the same directory as the source files, and add the following content:
+Create a Dockerfile in the same directory as the source files, and add the following content:
 
 ```
 # Use the official lightweight Node.js 12 image.
@@ -107,7 +107,7 @@ COPY . ./
 CMD [ "npm", "start" ]
 ```
 
-# Cloud Build
+## Use Cloud Build cli to submit build job
 
 Build your container image using Cloud Build by running the following command from the directory containing the Dockerfile. (Note the $GOOGLE_CLOUD_PROJECT environmental variable in the command, which contains your lab's Project ID):
 
@@ -115,11 +115,42 @@ Build your container image using Cloud Build by running the following command fr
 gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/helloworld
 ```
 
+## Use cloud build config file to submit a build job
+
+```
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/helloworld:$COMMIT_SHA'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'helloworld'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/helloworld:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1' # Example region
+
+images:
+  - 'gcr.io/$PROJECT_ID/helloworld:$COMMIT_SHA'
+
+```
+### submit cloud builds using config file
+```
+gcloud builds submit --config cloudbuild.yaml 
+```
+
+
 Cloud Build is a service that executes your builds on Google Cloud. It executes a series of build steps, where each build step is run in a Docker container to produce your application container (or other artifacts) and push it to Cloud Registry, all in one command.
 
 Once pushed to the registry, you will see a SUCCESS message containing the image name (gcr.io/[PROJECT-ID]/helloworld). The image is stored in Artifact Registry and can be re-used if desired.
 
-- List all the container images associated with your current project using this command:
+### List all the container images associated with your current project using this command:
 
 ```
 gcloud container images list
@@ -131,10 +162,10 @@ gcloud container images list
 gcloud auth configure-docker
 ```
 
-- To run and test the application locally from Cloud Shell, start it using this standard docker command:
+### To run and test the application locally from Cloud Shell, start it using this standard docker command:
 
 ```
 docker run -d -p 8080:8080 gcr.io/$GOOGLE_CLOUD_PROJECT/helloworld
 ```
 
-- In the Cloud Shell window, click on Web preview and select Preview on port 8080. This should open a browser window showing the "Hello World!" message.
+### In the Cloud Shell window, click on Web preview and select Preview on port 8080. This should open a browser window showing the "Hello World!" message.

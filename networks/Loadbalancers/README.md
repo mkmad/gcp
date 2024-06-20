@@ -139,6 +139,7 @@ They operate at layer 4 of the OSI model (transport layer) and primarily support
 
     **Note: GCP automatically creates the necessary L4 load balancing infrastructure when you create the forwarding rule and specify the target pool. However, the target pool itself must be created beforehand.**
 
+    **Note: Service obj in GKE creates a L4 loadbalancer**
 ## Sending traffic to your instances
 
 1. Access the external IP address of the LoadBalancer
@@ -207,6 +208,8 @@ To set up a load balancer with a Compute Engine backend, your VMs need to be in 
     ```
 
     **Note: The ingress rule allows traffic from the Google Cloud health checking systems (130.211.0.0/22 and 35.191.0.0/16). This lab uses the target tag allow-health-check to identify the VMs**
+
+    **Note: Ingress obj in GKE creates a L7 loadbalancer**
 
 4. Now that the instances are up and running, set up a global static external IP address that your customers use to reach your load balancer:
 
