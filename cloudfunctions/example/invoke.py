@@ -5,6 +5,29 @@ import google.oauth2.id_token
 
 import os
 
+"""
+You need to provide the service account key in the application_default_credentials.json file. Here's how:
+
+1. Create a Service Account Key:
+
+- Go to the Google Cloud Console and navigate to IAM & Admin -> Service Accounts.
+- Select the service account you want to impersonate (mohan-sa@mohan-sandbox.iam.gserviceaccount.com).
+- Click on the "Keys" tab and then "Add Key".
+- Choose "Create new key" and select "JSON" as the key type.
+- Click "Create". This will download a JSON file containing the service account key.
+
+2. Update application_default_credentials.json:
+
+- Open the downloaded JSON file containing the service account key.
+- Copy the entire contents of the file.
+- Open your application_default_credentials.json file.
+- Replace the entire contents of the file with the copied service account key.
+
+3. Run Your Script:
+
+- Run your Python script (invoke.py) again.
+
+"""
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/mohan/gcp-keys/mohan-sandbox-sa.json"
 CLOUD_FUNCTION_URL = "https://us-central1-mohan-sandbox.cloudfunctions.net/auth-function"
 
