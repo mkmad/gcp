@@ -1,0 +1,44 @@
+(
+(-- GKE Node Pool Update
+(resource.type=gke_nodepool log_id(cloudaudit.googleapis.com%2Factivity)
+(
+    protoPayload.methodName=(
+        google.container.internal.ClusterManagerInternal.UpdateClusterInternal OR
+        google.container.internal.ClusterManagerInternal.RepairNodePool
+    )
+) OR (
+    protoPayload.methodName=(
+        google.container.v1beta1.ClusterManager.UpdateNodePool OR
+        google.container.v1.ClusterManager.UpdateNodePool OR
+        google.container.v1beta1.ClusterManager.SetNodePoolSize OR
+        google.container.v1.ClusterManager.SetNodePoolSize OR
+        google.container.v1beta1.ClusterManager.SetNodePoolManagement OR
+        google.container.v1.ClusterManager.SetNodePoolManagement OR
+        google.container.v1beta1.ClusterManager.SetNodePoolAutoscaling OR
+        google.container.v1.ClusterManager.SetNodePoolAutoscaling
+    )
+    operation.first=true
+))
+(resource.labels.cluster_name=
+resource.labels.location=))
+OR
+(-- GKE Cluster Update
+(resource.type=gke_cluster log_id(cloudaudit.googleapis.com%2Factivity)
+(
+    protoPayload.methodName=(
+        google.container.internal.ClusterManagerInternal.PatchCluster OR
+        google.container.internal.ClusterManagerInternal.UpdateClusterInternal OR
+        google.container.internal.ClusterManagerInternal.UpdateCluster
+    )
+) OR (
+    protoPayload.methodName=(
+        google.container.v1beta1.ClusterManager.UpdateCluster OR
+        google.container.v1.ClusterManager.UpdateCluster
+    )
+    operation.first=true
+)
+protoPayload.metadata.operationType=(UPGRADE_MASTER OR REPAIR_CLUSTER OR UPDATE_CLUSTER))
+(resource.labels.cluster_name=
+resource.labels.location=))
+)
+(resource.labels."project_id"="")
