@@ -1,0 +1,9 @@
+google-auth
+google-auth-oauthlib
+flask
+requests
+google-auth-httplib2
+google-cloud-storage==2.17.0
+google-api-python-client
+tqdm==4.66.4
+google-resumable-media

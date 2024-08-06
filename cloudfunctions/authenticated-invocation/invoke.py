@@ -29,7 +29,7 @@ You need to provide the service account key in the application_default_credentia
 
 """
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/mohan/gcp-keys/mohan-sandbox-sa.json"
-CLOUD_FUNCTION_URL = "https://us-central1-mohan-sandbox.cloudfunctions.net/auth-function"
+CLOUD_FUNCTION_URL = "" # Target Cloud function URL
 
 def make_authorized_get_request(endpoint, audience):
     """
@@ -39,7 +39,6 @@ def make_authorized_get_request(endpoint, audience):
     """
 
     # Cloud Functions uses your function's URL as the `audience` value
-    # audience = https://project-region-projectid.cloudfunctions.net/myFunction
     # For Cloud Functions, `endpoint` and `audience` should be equal
 
     req = urllib.request.Request(endpoint)
