@@ -16,8 +16,8 @@ Network	                            : default
 Subnet	                            : default 		
 Stack type	                        : IPv4		
 VPC-native traffic routing	        : Enabled		
-Cluster Pod IPv4 range (default)	: 192.168.128.0/17	
-IPv4 service range                  : 192.168.0.0/17		
+cluster_ipv4_cidr_block             : "172.16.0.0/12"
+services_ipv4_cidr_block            : "172.32.0.0/16"		
 HTTP Load Balancing	                : Enabled		
 Subsetting for L4 Internal LB       : Enabled				
 Gateway API	                        : Enabled		
