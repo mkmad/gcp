@@ -1,0 +1,11 @@
+# Project Vars
+project_id                  = "mohan-sandbox"
+cluster_name                = "tele-webhook"
+region                      = "us-central1"
+location                    = "us-central1"
+# Network Configs
+network                     = "default"
+subnetwork                  = "default"
+cluster_ipv4_cidr_block     = "172.16.0.0/12"
+services_ipv4_cidr_block    = "172.32.0.0/16"
+master_ipv4_cidr_block      = "10.0.0.0/28"

@@ -1,0 +1,32 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
+# # Extension files
+# *.tfvars
+# *.tfvars.json
+
+# Sensitive files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# SSH key files
+*.pem
+*.key
+
+# Lock file
+.terraform.lock.hcl
+
+# Ignore plan files
+*.tfplan
+
+# Ignore output from terraform apply -auto-approve
+terraform.tfstate.backup
