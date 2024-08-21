@@ -1,16 +1,18 @@
-from flask import Flask, request, jsonify
-from google.oauth2 import service_account
-from google.cloud.exceptions import GoogleCloudError
 import os
 import time
 import shutil
 import subprocess
+import tarfile
+import threading
 import zipfile
+
 from concurrent.futures import ThreadPoolExecutor
+from flask import Flask, request, jsonify
+from google.oauth2 import service_account
+from google.cloud.exceptions import GoogleCloudError
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from tqdm import tqdm
-import threading
 
 app = Flask(__name__)
 
@@ -23,6 +25,7 @@ ENCRYPT_FILES = True
 MAX_RETRIES = 5
 RETRY_DELAY = 5  # seconds
 SERVICE_ACCOUNT_FILE = 'backup-transfer.json'
+DESTINATION_FOLDER='/root/'
 
 # Dictionary to track progress
 progress_tracker = {
@@ -55,7 +58,7 @@ def import_public_key(public_key_file):
     """Import public key"""
     print(f"Importing public key from {public_key_file}")
     try:
-        result = subprocess.run(['gpg', '--yes', '--import', public_key_file], capture_output=True, text=True)
+        result = subprocess.run(['sudo', 'gpg', '--yes', '--import', public_key_file], capture_output=True, text=True)
         print(result.stdout)
         if result.returncode != 0:
             print(result.stderr)
@@ -70,7 +73,7 @@ def encrypt_chunk(file_path, recipient_email, chunk_number, chunk_data):
     chunk_file_path = f"{file_path}.part{chunk_number}.gpg"
     try:
         process = subprocess.Popen([
-            'gpg', '--yes', '--always-trust', '--output', chunk_file_path,
+            'sudo', 'gpg', '--yes', '--always-trust', '--output', chunk_file_path,
             '--encrypt', '--recipient', recipient_email
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
@@ -246,6 +249,27 @@ def status(stage):
         return jsonify({stage: progress_tracker[stage]}), 200
     else:
         return jsonify({'error': f'Stage {stage} not found'}), 404
+
+@app.route('/create_folder', methods=['POST'])
+def create_folder():
+    folder_name = request.json.get('folder_name')
+    if not folder_name:
+        return jsonify({'error': 'Folder name is required'}), 400
+    
+    # Check if the folder already exists
+    if os.path.exists(DESTINATION_FOLDER + folder_name):
+        return jsonify({'message': f'Folder {folder_name} already exists'}), 200
+    
+    print(f"Folder {folder_name} does not exist. Creating")
+    # Create the folder
+    try:
+        os.makedirs(DESTINATION_FOLDER + folder_name)
+        print(f"Folder {folder_name} created successfully")
+        return jsonify({'message': f'Folder {folder_name} created successfully'}), 201
+    
+    except OSError as e:
+        print(f"Error creating folder {folder_name}: {e}")
+        return jsonify({'error': f'Error creating folder {folder_name}: {e}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

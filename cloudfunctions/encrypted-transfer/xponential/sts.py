@@ -1,38 +1,17 @@
-import os
-import subprocess
-import threading
 import requests
-import zipfile
-from concurrent.futures import ThreadPoolExecutor
-from google.cloud import storage
-from google.auth import default
-from google.auth.credentials import Credentials
-from google.auth.exceptions import DefaultCredentialsError
+import time
+import threading
 from google_auth_oauthlib.flow import Flow
+from google.cloud import storage_transfer
 from google.cloud.exceptions import GoogleCloudError
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-from tqdm import tqdm
 from urllib.parse import urlparse, parse_qs, urlencode, quote, unquote
 
-import time
-import typing
-
-from datetime import datetime
-
-from google.cloud import storage_transfer
-from google.oauth2 import service_account
-from google.protobuf.duration_pb2 import Duration
-
-import requests
-import time
-
 # Flask app base URL
-SERVER_BASE_URL = "http://34.31.222.16:5001"
+SERVER_BASE_URL = "http://35.231.110.68:5001"
 
 # Constants
 DESTINATION_BUCKET_NAME = 'rowhousebackup'
-DESTINATION_FOLDER='/mnt/disks/sts/'
+DESTINATION_FOLDER='/root/'
 CLIENT_SECRETS_FILE = 'client_secret.json'
 SCOPES = ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/drive']
 REDIRECT_URI = 'https://us-west2-backup-428118.cloudfunctions.net/StorageTransferFunction'
@@ -47,7 +26,7 @@ RETRY_DELAY = 5  # seconds
 SERVICE_ACCOUNT_EMAIL = "backuptransfer@backup-428118.iam.gserviceaccount.com"
 PROJECT_ID = "backup-428118"
 DESCRIPTION = "Archive Org data export"
-AGENT_POOL_NAME="projects/backup-428118/agentPools/storage-transfer"
+AGENT_POOL_NAME="projects/backup-428118/agentPools/sts"
 # Stages to monitor
 STAGES = ["compression", "encryption", "drive_upload"]
 
@@ -145,7 +124,7 @@ def create_transfer_job(
                         "bucket_name": source_bucket,
                     },
                     "posix_data_sink": {
-                        "root_directory": DESTINATION_FOLDER,
+                        "root_directory": DESTINATION_FOLDER + source_bucket,
                     },
                     "transfer_options": {
                         "delete_objects_from_source_after_transfer": False
@@ -181,12 +160,23 @@ def get_transfer_job_status(credentials, job_name):
         latest_operation_name = job.latest_operation_name
         print('Fetching operation')
         op = client.get_operation()
-        print(op)
         print(f"Transfer job latest_operation_name: {latest_operation_name}")
         return op
     except GoogleCloudError as e:
         print(f"Error getting transfer job status: {e}")
         return None  # Or handle the error as appropriate
+
+def create_folder(folder_name):
+    """Send a request to create a folder if it does not exist."""
+    url = f"{SERVER_BASE_URL}/create_folder"
+    response = requests.post(url, json={"folder_name": folder_name})
+    if response.status_code == 201:
+        print(f"Folder {folder_name} created successfully.")
+    elif response.status_code == 200:
+        print(f"Folder {folder_name} already exists.")
+    else:
+        print(f"Failed to create folder: {response.text}")
+        raise Exception(f"Failed to create folder: {response.text}")
 
 def main(request):
     """Entry point for the cloud function."""
@@ -204,7 +194,6 @@ def main(request):
     if not auth_code:
         url = urlparse(request.url)
         query_params = parse_qs(url.query)
-        print(query_params)
         auth_code = query_params.get('code', [None])[0]
         state = urlencode({'folder_name': folder_name})
 
@@ -225,24 +214,19 @@ def main(request):
 
     print(f'Starting process for folder: {folder_name}. Check the logs for progress updates.')
 
-    response_message = (
-        f"<html><body>"
-        f"<p>Processing for folder '<strong>{folder_name}</strong>' has started. Check the logs for progress updates.</p>"
-        f"<p>Click on this link to watch for logs: "
-        f"<a href=\"{LOGS_URL}\" style=\"color: blue; text-decoration: underline;\">Watch Logs</a></p>"
-        f"</body></html>"
-    )
-
     def background_task(auth_code, folder_name):
         """Run the processing task in the background"""
         try:
             credentials = fetch_credentials(auth_code)
+
+            # Call the create_folder endpoint
+            create_folder(folder_name)
             # Download archive to GCP server
             job = create_transfer_job(credentials, folder_name)
             job_run = run_transfer_job(credentials, job.name)
             while not job_run.done():
                 # operation = get_transfer_job_status(credentials, job.name)
-                print("Download is still running...")
+                print("Downloading archive...")
                 time.sleep(60)
             print("Download completed successfully!")
             # Start Compression, Encryption and Drive Upload Process
@@ -252,8 +236,9 @@ def main(request):
             print(f"task failed: {e}")    
 
     threading.Thread(target=background_task, args=(auth_code, folder_name)).start()
-    return response_message, 200, {'Content-Type': 'text/html'}
-
+    
+    # Manually set the headers for HTTP redirect
+    return '', 302, {'Location': LOGS_URL}
 
 if __name__ == "__main__":
     main('test')
