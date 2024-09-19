@@ -1,19 +1,59 @@
+import os
 import requests
 import time
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+import google.auth
 
 # Flask app base URL
-BASE_URL = "http://34.31.222.16:5001"
+BASE_URL = "http://127.0.0.1:5001"
 
 # Folder name to process
-folder_name = "/Users/mohan/Desktop/xponential/5Giga"
+folder_name = "takeout-export-f9d7e813-bad7-42f8-b66c-3c0712e1f0de"
 
 # Stages to monitor
-stages = ["compression", "encryption", "drive_upload"]
+stages = ["compression", "encryption", "drive_upload", "download"]
 
-def start_process(folder_name):
+# OAuth 2.0 settings
+SCOPES = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/devstorage.read_write',
+    'https://www.googleapis.com/auth/cloud-platform'
+]
+CLIENT_SECRETS_FILE = 'local_secret.json'
+ADC_SECRET_FILE = 'rowhouse-creds.json'
+AUTH_PORT = 5002
+
+def get_adc_credentials():
+    # Set the GOOGLE_APPLICATION_CREDENTIALS environment variable
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = ADC_SECRET_FILE
+
+    # Fetch Application Default Credentials
+    credentials, project = google.auth.default()
+    return credentials
+
+def get_oauth_credentials():
+    flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES)
+    credentials = flow.run_local_server(port=AUTH_PORT)
+    return credentials
+
+def create_folder(folder_name):
+    """Send a request to create a folder if it does not exist."""
+    url = f"{BASE_URL}/create_folder"
+    response = requests.post(url, json={"folder_name": folder_name})
+    if response.status_code == 201:
+        print(f"Folder {folder_name} created successfully.")
+    elif response.status_code == 200:
+        print(f"Folder {folder_name} already exists.")
+    else:
+        print(f"Failed to create folder: {response.text}")
+        raise Exception(f"Failed to create folder: {response.text}")
+
+def start_process(folder_name, credentials):
     """Send a request to start processing the folder."""
     url = f"{BASE_URL}/process"
-    response = requests.post(url, json={"folder_name": folder_name})
+    credentials_dict = {"key": "val"}
+    response = requests.post(url, json={"folder_name": folder_name, "credentials": credentials_dict})
     if response.status_code == 202:
         print(f"Processing started for folder: {folder_name}")
         return True
@@ -58,6 +98,9 @@ def monitor_progress():
     elapsed_time = end_time - start_time
     print(f"Total time taken: {elapsed_time:.2f} seconds")
 
+
 if __name__ == "__main__":
-    if start_process(folder_name):
+    credentials = {}
+    create_folder(folder_name)
+    if start_process(folder_name, credentials):
         monitor_progress()
