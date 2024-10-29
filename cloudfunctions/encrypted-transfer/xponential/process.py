@@ -247,10 +247,10 @@ def download(credentials, folder_name):
         print(f"Error during download: {e}")
         raise
 
-def process(credentials, folder_name, auth_code):
+def process(credentials, folder_name, auth_code, encryption):
     """Process files in a folder, including download, compress, encrypt, and upload."""
     print(f'Starting process for folder: {folder_name}')
-    try:        
+    try:
         # Download folder from cloud storage
         download_credentials = get_adc_credentials()        
         download_folder_path = download(download_credentials, folder_name)
@@ -263,25 +263,32 @@ def process(credentials, folder_name, auth_code):
         shutil.rmtree(download_folder_path)
 
         # Encrypt files
-        if ENCRYPT_FILES:
+        if encryption:
             import_public_key(PUBLIC_KEY_FILE)
             encrypted_file_path = encrypt_file(zip_filename)
             print(f"Encrypted file to {encrypted_file_path}")
             upload_path = encrypted_file_path
         else:
             upload_path = zip_filename
+            update_progress("encryption", 100)
 
         # Upload zip file to google drive
         print(f"Uploading {upload_path} to Google Drive in folder {DRIVE_FOLDER_ID}")
         download_credentials = get_service_account_credentials()
-        drive_file_id = upload_file_to_drive(upload_path, f"{folder_name}.zip.gpg", DRIVE_FOLDER_ID, download_credentials)
+        drive_file_id = upload_file_to_drive(upload_path, f"{folder_name}", DRIVE_FOLDER_ID, download_credentials)
         print(f"Folder {folder_name} uploaded to Google Drive with ID: {drive_file_id}")
         update_progress("drive_upload", 100)
 
         # Cleanup all files
         print(f'Cleaning up temporary files')
-        os.remove(upload_path)
-        os.remove(zip_filename)
+        # Check if the file exists before attempting to remove it
+        if os.path.exists(upload_path):
+            os.remove(upload_path)
+            print(f'Removed {upload_path}')
+
+        if os.path.exists(zip_filename):
+            os.remove(zip_filename)
+            print(f'Removed {zip_filename}')
 
         print(f'Successfully processed folder: {folder_name}')
         return (f'Success: Folder {folder_name} processed', 200)
@@ -301,14 +308,17 @@ def process_folder():
     folder_name = request.json.get('folder_name')
     credentials_json = request.json.get('credentials')
     auth_code = request.json.get('auth_code')
+    encryption = request.json.get('encryption')
     # Validate params
-    if not folder_name:
+    if folder_name is None:
         return jsonify({'error': 'Folder name is required'}), 400
-    if not credentials_json:
+    if credentials_json is None:
         return jsonify({'error': 'Credentials are required'}), 400
-    if not auth_code:
+    if auth_code is None:
         return jsonify({'error': 'auth_code is required'}), 400
-        
+    if encryption is None:
+        return jsonify({'error': 'encryption is required'}), 400
+
     # Parse the credentials JSON string into a dictionary
     credentials_dict = json.loads(credentials_json)
     # Recreate the credentials object
@@ -320,7 +330,7 @@ def process_folder():
             progress_tracker[key] = 0
 
     # Start the processing in a separate thread
-    threading.Thread(target=process, args=(credentials, folder_name, auth_code)).start()
+    threading.Thread(target=process, args=(credentials, folder_name, auth_code, encryption)).start()
 
     return jsonify({'message': f'Processing started for folder {folder_name}'}), 202
 
