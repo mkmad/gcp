@@ -12,10 +12,10 @@ from tqdm import tqdm
 CHUNK_SIZE = 256 * 1024 * 1024  # 256MB chunks
 MAX_RETRIES = 5
 RETRY_DELAY = 5  # seconds
-PROJECT_ID = "proj-a-429014"
+PROJECT_ID = "backup-landnat"
 ADC_SECRET_FILE = 'adc.json'
-SOURCE_BUCKET_NAME = 'takeout-export-965f389b-7644-4746-900f-c3f8d33bfc0a'  # Your source bucket
-DESTINATION_BUCKET_NAME = 'sts-d'  # Your destination bucket
+SOURCE_BUCKET_NAME = 'takeout-export-1e9e9a5d-6383-41c9-9e7a-c92184ff46e2'  # Your source bucket
+DESTINATION_BUCKET_NAME = 'gws-landnet-backup'  # Your destination bucket
 
 
 # Dictionary to track progress
