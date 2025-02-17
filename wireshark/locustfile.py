@@ -17,16 +17,13 @@ def track_status_code(request_type, name, response_time, response_length, respon
 
 class WebsiteUser(HttpUser):
 
-    host = "https://brg2.satisfi4.com"
+    host = "https://mifflin-dev-1047314544751.us-central1.run.app"
     wait_time = lambda _: 0  # No wait between requests
 
     # Define the list of hosts to be hit simultaneously
     hosts = [
-        "http://10.35.0.29:3000",
-        "http://10.35.1.90:3000",
-        "https://brg2.satisfi4.com"
+        "https://mifflin-dev-1047314544751.us-central1.run.app/v2/heartbeat/"
     ]
-
     @task
     def send_requests(self):
         # List to hold greenlets for parallel execution
