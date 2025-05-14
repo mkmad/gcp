@@ -29,7 +29,8 @@ poc/
 ├── infrastructure/
 │   └── init.sql
 ├── scripts/
-│   └── deploy.sh
+│   ├── deploy.sh
+│   └── dev.sh
 └── README.md
 ``` 
 
@@ -185,42 +186,85 @@ FIREBASE_CONFIG=firebase-config
 
 ## Local Development
 
-1. Set up environment variables in `.env` file:
+### Prerequisites
 
+1. Docker and Docker Compose installed
+2. Firebase project set up
+3. `firebase.json` service account key in the project root
+
+### Quick Start
+
+The easiest way to start developing locally is to use the development script:
+
+```bash
+# Navigate to the scripts directory
+cd scripts
+
+# Start the development environment (default: dev)
+./dev.sh
+
+# Or specify an environment
+./dev.sh staging
+```
+
+The script will:
+1. Create necessary environment files if they don't exist
+2. Start all services with Docker Compose
+3. Wait for all services to be ready
+4. Display service URLs and helpful commands
+
+### Manual Setup
+
+If you prefer to set things up manually:
+
+1. Create frontend environment file:
    ```bash
-   # Backend .env
-   ENVIRONMENT=dev
-   # Get these values from Secret Manager
-   DB_USER=$(gcloud secrets versions access latest --secret=db-credentials-dev | jq -r .DB_USER)
-   DB_PASS=$(gcloud secrets versions access latest --secret=db-credentials-dev | jq -r .DB_PASS)
-   DB_NAME=$(gcloud secrets versions access latest --secret=db-credentials-dev | jq -r .DB_NAME)
-   DB_HOST=$(gcloud secrets versions access latest --secret=db-credentials-dev | jq -r .DB_HOST)
-
-   # Frontend .env
-   ENVIRONMENT=dev
-   REACT_APP_API_URL=http://localhost:5000
-   # Get Firebase config from Secret Manager
-   FIREBASE_CONFIG=$(gcloud secrets versions access latest --secret=firebase-config)
+   # frontend/.env
+   REACT_APP_ENV=dev
+   REACT_APP_API_URL=http://localhost:8080
+   FIREBASE_API_KEY=your-api-key
+   FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   FIREBASE_PROJECT_ID=your-project-id
+   FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+   FIREBASE_APP_ID=your-app-id
    ```
 
-2. Install dependencies:
+2. Start the services:
    ```bash
-   # Backend
-   cd backend
-   pip install -r requirements.txt
-   
-   # Frontend
-   cd frontend
-   npm install
+   docker compose up --build
    ```
 
-3. Run the services:
-   ```bash
-   # Backend
-   cd backend
-   python app.py
-   
-   # Frontend
-   cd frontend
-   npm start
-   ```
+### Development Commands
+
+```bash
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+
+# Rebuild services
+docker compose up --build
+
+# Access database
+docker compose exec db psql -U postgres -d idp_poc
+
+# Run database migrations
+docker compose exec db psql -U postgres -d idp_poc < infrastructure/init.sql
+```
+
+## Cloud Deployment
+
+To deploy to cloud environments:
+
+```bash
+# Navigate to the scripts directory
+cd scripts
+
+# Deploy to dev environment
+./deploy.sh dev
+
+# Deploy to staging environment
+./deploy.sh staging
+```

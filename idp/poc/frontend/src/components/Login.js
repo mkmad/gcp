@@ -8,15 +8,17 @@ import {
   Button,
   Typography,
   Box,
-  Alert
+  Alert,
+  Divider
 } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -28,7 +30,21 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch (error) {
-      setError('Failed to sign in: ' + error.message);
+      setError('Failed to login. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      setError('');
+      setLoading(true);
+      await loginWithGoogle();
+      navigate('/');
+    } catch (error) {
+      setError(error.message || 'Google sign-in failed.');
+      console.error('Google sign-in error:', error);
     } finally {
       setLoading(false);
     }
@@ -54,10 +70,14 @@ export default function Login() {
             width: '100%',
           }}
         >
-          <Typography component="h1" variant="h5">
+          <Typography component="h1" variant="h5" align="center">
             Sign In
           </Typography>
-          {error && <Alert severity="error" sx={{ mt: 2, width: '100%' }}>{error}</Alert>}
+          {error && (
+            <Typography color="error" align="center" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
@@ -91,6 +111,17 @@ export default function Login() {
               disabled={loading}
             >
               Sign In
+            </Button>
+            <Divider sx={{ my: 2 }}>or</Divider>
+            <Button
+              fullWidth
+              variant="outlined"
+              sx={{ mb: 2, textTransform: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              startIcon={<GoogleIcon />}
+            >
+              Sign in with Google
             </Button>
           </Box>
         </Paper>

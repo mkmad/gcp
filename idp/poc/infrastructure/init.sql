@@ -44,12 +44,34 @@ INSERT INTO roles (name, description) VALUES
     ('editor', 'Can view and edit resources'),
     ('viewer', 'Can only view resources');
 
--- Insert sample resources
+-- Clear existing resources
+TRUNCATE resources CASCADE;
+
+-- Insert sample resources with clear role-based visibility
 INSERT INTO resources (name, description, environment, sensitive_data) VALUES
-    ('Customer Data', 'Sensitive customer information', 'dev', true),
-    ('Analytics', 'Business analytics dashboard', 'dev', false),
-    ('Customer Data', 'Sensitive customer information', 'staging', true),
-    ('Analytics', 'Business analytics dashboard', 'staging', false);
+    -- Sensitive Data (Admin Only)
+    ('Customer PII Data', 'Personal identifiable information of customers', 'dev', true),
+    ('Financial Reports', 'Company financial statements and forecasts', 'dev', true),
+    ('Employee Records', 'HR data and employee personal information', 'dev', true),
+    
+    -- Mixed Sensitivity (Admin + Editor)
+    ('Analytics Dashboard', 'Business metrics and KPIs', 'dev', true),
+    ('Sales Pipeline', 'Current sales opportunities and forecasts', 'dev', true),
+    
+    -- Non-Sensitive (All Roles)
+    ('Public Blog Posts', 'Company blog content', 'dev', false),
+    ('Product Catalog', 'List of available products', 'dev', false),
+    ('Company News', 'Public company announcements', 'dev', false),
+    ('Help Documentation', 'Public product documentation', 'dev', false);
+
+-- Add the same resources for staging environment
+INSERT INTO resources (name, description, environment, sensitive_data)
+SELECT 
+    name,
+    description,
+    'staging' as environment,
+    sensitive_data
+FROM resources WHERE environment = 'dev';
 
 -- Function to add user role
 CREATE OR REPLACE FUNCTION add_user_role(
@@ -70,4 +92,25 @@ BEGIN
     WHERE r.name = p_role_name
     ON CONFLICT (user_email, role_id, environment) DO NOTHING;
 END;
-$$ LANGUAGE plpgsql; 
+$$ LANGUAGE plpgsql;
+
+-- Optional: Row-level permissions for future extensibility
+CREATE TABLE IF NOT EXISTS row_permissions (
+    id SERIAL PRIMARY KEY,
+    user_email VARCHAR(255) NOT NULL,
+    resource_id INTEGER REFERENCES resources(id),
+    can_view BOOLEAN DEFAULT false,
+    can_edit BOOLEAN DEFAULT false,
+    environment VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_email, resource_id, environment)
+);
+
+-- MIGRATION NOTE: If you want to use row-level permissions, join this table in your backend queries. 
+
+
+-- Assign 'admin' role to your user in 'dev' environment
+SELECT add_user_role('mohan@mkmad.com', 'admin', 'dev');
+
+-- Assign 'viewer' role to your user in 'dev' environment
+SELECT add_user_role('kiruthika@mkmad.com', 'viewer', 'dev');
