@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello from App Engine - Material Design</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #536976, #292e49);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.5s;
+        }
+        .card {
+            border-radius: 1.2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: background 0.5s, color 0.5s;
+        }
+        .brand-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dark-mode {
+            background: linear-gradient(135deg, #232526, #414345) !important;
+        }
+        .dark-mode .card {
+            background: #232526 !important;
+            color: #fff !important;
+        }
+        .dark-mode .brand-logo {
+            background: linear-gradient(90deg, #ffaf7b, #d76d77);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dark-mode .btn, .dark-mode .switch label .lever {
+            background-color: #d76d77 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row center-align">
+            <div class="col s12 m8 offset-m2 l6 offset-l3">
+                <div class="card z-depth-4 p-4">
+                    <div class="card-content">
+                        <span class="brand-logo">Hello from App Engine!</span>
+                        <p class="flow-text">This is a Material Design + Dark Mode Flask Hello World template, running on Google App Engine.</p>
+                        <div class="section">
+                            <a href="https://cloud.google.com/appengine" class="btn waves-effect waves-light teal lighten-1">Learn more about App Engine</a>
+                        </div>
+                        <div class="section">
+                            <div class="switch">
+                                <label>
+                                    Light
+                                    <input type="checkbox" id="darkModeToggle">
+                                    <span class="lever"></span>
+                                    Dark
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-action grey-text text-darken-1">
+                        Built with <b>Flask</b> &amp; <b>Materialize CSS</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        // Dark mode toggle
+        const toggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+        // Load preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            body.classList.add('dark-mode');
+            toggle.checked = true;
+        }
+        toggle.addEventListener('change', function() {
+            if (this.checked) {
+                body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'false');
+            }
+        });
+    </script>
+</body>
+</html> 
