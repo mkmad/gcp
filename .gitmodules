@@ -1,0 +1,3 @@
+[submodule "ai-ml/vertex-ai-mlops"]
+	path = ai-ml/vertex-ai-mlops
+	url = https://github.com/statmike/vertex-ai-mlops.git
